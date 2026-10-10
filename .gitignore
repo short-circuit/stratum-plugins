@@ -1,0 +1,14 @@
+# Rust
+target/
+**/target/
+
+# Editor / OS
+.DS_Store
+*.swp
+*~
+
+# Node
+node_modules/
+
+# Local scratch
+*.log

@@ -1,0 +1,24 @@
+{
+  "schema": "stratum-plugins-catalog/v1",
+  "plugins": [
+    {
+      "schema_version": 1,
+      "id": "com.example.hello-world",
+      "name": "Hello World",
+      "version": "0.1.0",
+      "description": "Logs note metadata on save and demonstrates the pkm host API",
+      "author": "Stratum Community",
+      "entry": "plugin.wasm",
+      "permissions": [
+        "file:read"
+      ],
+      "hooks": {
+        "onSave": true
+      },
+      "repo": "https://github.com/short-circuit/stratum-plugins",
+      "source": "examples/hello-world",
+      "sha256": "78d3d3d9784e089a7827a54b3c1f0cea2c3b75a14685edc16309cebad17c2d57",
+      "download_url": "https://raw.githubusercontent.com/short-circuit/stratum-plugins/master/plugins/com.example.hello-world/plugin.wasm"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "id": "com.example.hello-world",
+  "name": "Hello World",
+  "version": "0.1.0",
+  "author": "Stratum Community",
+  "description": "Logs note metadata on save and demonstrates the pkm host API",
+  "entry": "plugin.wasm",
+  "permissions": ["file:read"],
+  "hooks": { "onSave": true }
+}

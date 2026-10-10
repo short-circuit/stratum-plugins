@@ -1,0 +1,89 @@
+# Stratum plugins repository — plugin submission CI
+#
+# Validates that the repository satisfies the plugin submission contract:
+#   (a) PLUGIN_TEMPLATE.md sections present (header/template check)
+#   (b) plugins/index.json is valid JSON and schema-conformant
+#   (c) Every listed plugin has a matching built .wasm artifact and its sha256
+#       matches (content-addressing)
+#   (d) WASM smoke loader instantiates the module, calls the declared hook, and
+#       asserts no trap (plugin crash isolation)
+#
+# Runs on push and pull_request. Must FAIL on any template/index/artifact
+# violation.
+name: plugin-ci
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Build the example plugins (cargo) so the committed artifacts can be
+# re-verified; scripts rebuild nothing — CI only validates committed state.
+jobs:
+  validate:
+    name: Validate plugin contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate repository contract
+        run: node scripts/validate_plugins.js
+
+      - name: Smoke-load every plugin artifact
+        run: |
+          set -euo pipefail
+          while IFS= read -r wasm; do
+            echo "smoke: $wasm"
+            node scripts/smoke_plugin.js "$wasm"
+          done < <(find plugins -name '*.wasm' | sort)
+
+  # Rebuild example plugin crates and compare against the committed artifacts
+  # (catches "manifest embedded in source changed but artifact not rebuilt").
+  build-examples:
+    name: Rebuild example plugins
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build example plugins (wasm32-wasip1)
+        run: |
+          set -euo pipefail
+          for dir in examples/*/; do
+            if [ -f "$dir/Cargo.toml" ]; then
+              echo "building $dir"
+              cargo build --release --target wasm32-wasip1 --manifest-path "$dir/Cargo.toml"
+            fi
+          done
+
+      - name: Verify example artifacts match committed plugins/
+        run: |
+          set -euo pipefail
+          if [ -f plugins/hello-world/plugin.wasm ]; then
+            src=examples/hello-world/target/wasm32-wasip1/release/stratum_plugin_hello_world.wasm
+            if [ -f "$src" ]; then
+              if ! cmp -s "$src" plugins/hello-world/plugin.wasm; then
+                echo "::error::examples/hello-world rebuild differs from plugins/hello-world/plugin.wasm — rebuild and commit the artifact"
+                exit 1
+              fi
+              echo "hello-world artifact matches source build"
+            fi
+          fi

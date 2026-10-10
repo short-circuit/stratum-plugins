@@ -1,0 +1,29 @@
+# The hello-world example is intentionally a standalone crate (not a workspace
+# member): it must build on a user's machine with a single `cargo build
+# --target wasm32-wasip1 --release --manifest-path examples/hello-world/Cargo.toml`,
+# without depending on the Stratum workspace.
+[workspace]
+
+[package]
+name = "stratum-plugin-hello-world"
+version = "0.1.0"
+edition = "2021"
+description = "Example Stratum plugin: logs note metadata through the pkm host API on save."
+
+# A plugin is a cdylib — hooks are exported as plain `(i32, i32) -> i32`
+# functions (the host ABI); there is no Rust entry point / main.
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# serde_json is the only runtime dependency the example needs: the host
+# delivers hook payloads and reads responses as UTF-8 JSON strings.
+serde_json = "1"
+
+[profile.release]
+# Keep the shipped .wasm small and deterministic.
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
