@@ -1,0 +1,12 @@
+{
+  "schema": "stratum-theme/v1",
+  "id": "com.stratum.paper-light",
+  "name": "Paper Light",
+  "version": "1.0.0",
+  "description": "A bright paper-like light theme.",
+  "author": "Stratum Community",
+  "dark_mode": false,
+  "primary_color": "#0d9488",
+  "secondary_color": "#e7e5e4",
+  "font_size": 16
+}

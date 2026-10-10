@@ -1,0 +1,12 @@
+{
+  "schema": "stratum-theme/v1",
+  "id": "com.stratum.midnight-indigo",
+  "name": "Midnight Indigo",
+  "version": "1.0.0",
+  "description": "A dark indigo theme for late-night note-taking.",
+  "author": "Stratum Community",
+  "dark_mode": true,
+  "primary_color": "#6366f1",
+  "secondary_color": "#312e81",
+  "font_size": 16
+}

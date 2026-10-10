@@ -1,0 +1,35 @@
+{
+  "schema": "stratum-theme-catalog/v1",
+  "themes": [
+    {
+      "id": "com.stratum.midnight-indigo",
+      "name": "Midnight Indigo",
+      "version": "1.0.0",
+      "description": "A dark indigo theme for late-night note-taking.",
+      "author": "Stratum Community",
+      "dark_mode": true,
+      "primary_color": "#6366f1",
+      "secondary_color": "#312e81",
+      "font_size": 16,
+      "repo": "https://github.com/short-circuit/stratum-plugins",
+      "source": "themes/com.stratum.midnight-indigo",
+      "sha256": "0e76c0dce1ecf0fcfc7e7a4fd77ab8eb742b1c9c195d4289ed5d9386f034bca5",
+      "download_url": "https://raw.githubusercontent.com/short-circuit/stratum-plugins/main/themes/com.stratum.midnight-indigo/theme.json"
+    },
+    {
+      "id": "com.stratum.paper-light",
+      "name": "Paper Light",
+      "version": "1.0.0",
+      "description": "A bright paper-like light theme.",
+      "author": "Stratum Community",
+      "dark_mode": false,
+      "primary_color": "#0d9488",
+      "secondary_color": "#e7e5e4",
+      "font_size": 16,
+      "repo": "https://github.com/short-circuit/stratum-plugins",
+      "source": "themes/com.stratum.paper-light",
+      "sha256": "dd258385806587d67404962f9db6599f466a8d8956d689ef9ac8a9431ac521a3",
+      "download_url": "https://raw.githubusercontent.com/short-circuit/stratum-plugins/main/themes/com.stratum.paper-light/theme.json"
+    }
+  ]
+}

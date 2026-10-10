@@ -226,10 +226,74 @@ function checkReadme() {
   if (!text.includes('plugins/index.json')) fail('README.md must reference plugins/index.json');
 }
 
+// --- 5. Theme catalog (optional; validated when themes/index.json exists) --
+// Mirrors the in-app Theme Hub contract: every entry must reference an on-disk
+// themes/<id>/theme.json whose content sha256 matches, and download_url must
+// point at that artifact. A theme without a catalog entry is a violation.
+function checkThemes() {
+  const indexPath = path.join(ROOT, 'themes', 'index.json');
+  if (!fs.existsSync(indexPath)) return; // themes are optional
+  let index;
+  try {
+    index = JSON.parse(fs.readFileSync(indexPath, 'utf8'));
+  } catch (e) {
+    fail(`themes/index.json is not valid JSON: ${e.message}`);
+    return;
+  }
+  if (index.schema !== 'stratum-theme-catalog/v1') {
+    fail(`themes/index.json schema must be "stratum-theme-catalog/v1", got "${index.schema}"`);
+  }
+  if (!Array.isArray(index.themes) || index.themes.length === 0) {
+    fail('themes/index.json must have a non-empty "themes" array');
+    return;
+  }
+  const seen = new Set();
+  for (const [i, t] of index.themes.entries()) {
+    const label = `themes[${i}] (${t.id || 'no-id'})`;
+    if (typeof t.id !== 'string' || !MANIFEST_SCHEMA.id.pattern.test(t.id) || t.id.length > 128)
+      fail(`${label}: id invalid (reverse-DNS, ≤128, [A-Za-z0-9._-])`);
+    if (typeof t.name !== 'string' || t.name.length > 64) fail(`${label}: name too long (>64)`);
+    if (typeof t.version !== 'string' || t.version.length > 32) fail(`${label}: version invalid (>32)`);
+    if (typeof t.dark_mode !== 'boolean') fail(`${label}: dark_mode must be a boolean`);
+    if (typeof t.primary_color !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(t.primary_color))
+      fail(`${label}: primary_color must be a #rrggbb hex string`);
+    if (typeof t.secondary_color !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(t.secondary_color))
+      fail(`${label}: secondary_color must be a #rrggbb hex string`);
+    if (typeof t.font_size !== 'number' || t.font_size < 12 || t.font_size > 28)
+      fail(`${label}: font_size must be a number in [12,28]`);
+    if (typeof t.repo !== 'string' || !/^https?:\/\//.test(t.repo)) fail(`${label}: repo must be a URL`);
+    if (typeof t.sha256 !== 'string' || !/^[0-9a-f]{64}$/.test(t.sha256))
+      fail(`${label}: sha256 must be 64 lowercase hex chars`);
+    if (typeof t.download_url !== 'string' || !/^https?:\/\//.test(t.download_url))
+      fail(`${label}: download_url must be a URL`);
+    if (seen.has(t.id)) fail(`${label}: duplicate id "${t.id}"`);
+    seen.add(t.id);
+    // Corresponding on-disk artifact + sha256 match
+    const dir = path.join(ROOT, 'themes', t.id);
+    if (!fs.existsSync(dir)) { fail(`${label}: no themes/${t.id}/ directory`); continue; }
+    const themePath = path.join(dir, 'theme.json');
+    if (!fs.existsSync(themePath)) { fail(`${label}: missing themes/${t.id}/theme.json`); continue; }
+    let theme;
+    try { theme = JSON.parse(fs.readFileSync(themePath, 'utf8')); }
+    catch (e) { fail(`${label}: themes/${t.id}/theme.json not valid JSON: ${e.message}`); continue; }
+    // content sha256 must match the index entry
+    const hash = crypto.createHash('sha256').update(fs.readFileSync(themePath)).digest('hex');
+    if (hash !== t.sha256) fail(`${label}: sha256 mismatch — index says ${t.sha256}, artifact is ${hash}`);
+    // embedded theme identity must match the index entry
+    if (theme.schema !== 'stratum-theme/v1') fail(`${label}: theme schema must be "stratum-theme/v1"`);
+    if (theme.id !== t.id) fail(`${label}: theme id "${theme.id}" != index id "${t.id}"`);
+    if (theme.name !== t.name) fail(`${label}: theme name mismatch`);
+    if (theme.version !== t.version) fail(`${label}: theme version mismatch`);
+    if (!t.download_url.includes(`/themes/${t.id}/theme.json`))
+      fail(`${label}: download_url must point at themes/${t.id}/theme.json`);
+  }
+}
+
 // --- Main ----------------------------------------------------------------
 checkTemplate();
 checkIndex();
 checkReadme();
+checkThemes();
 
 if (errors.length > 0) {
   console.error('VALIDATION FAILED:');
